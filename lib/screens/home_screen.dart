@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_weather_app/bloc/weather_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -17,6 +18,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     weatherBloc = WeatherBloc();
+    getCachedCurrentWeather();
     super.initState();
   }
 
@@ -24,6 +26,16 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     weatherBloc.close();
     super.dispose();
+  }
+
+  Future<void> getCachedCurrentWeather() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? weather = prefs.getString('weather');
+    if (weather != null) {
+      weatherBloc.add(GetCachedCurrentWeather(weather));
+    } else {
+      weatherBloc.add(GetCurrentWeather());
+    }
   }
 
   @override
@@ -51,15 +63,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: Colors.white54,
                     child: Column(
                       children: [
-                        Text(state.weather.sys.country),
-                        Text(state.weather.name),
-                        Text(state.weather.main.tempMax.toString()),
+                        Text('Country: ${state.weather.sys.country}'),
+                        Text('Name: ${state.weather.name}'),
+                        Text(
+                            'Temperature: ${state.weather.main.temp.toString()}°C'),
                       ],
                     ),
                   );
                 } else if (state is WeatherLoadingState) {
                   return CircularProgressIndicator();
-                }else if (state is WeatherErrorState) {
+                } else if (state is WeatherErrorState) {
                   return Text(state.error);
                 }
                 return const SizedBox();

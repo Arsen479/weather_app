@@ -49,7 +49,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   return Container(
                     width: 200,
                     color: Colors.white54,
-                    child: Text(state.weather.sys.country),
+                    child: Column(
+                      children: [
+                        Text(state.weather.sys.country),
+                        Text(state.weather.name),
+                        Text(state.weather.main.tempMax.toString()),
+                      ],
+                    ),
                   );
                 } else if (state is WeatherLoadingState) {
                   return CircularProgressIndicator();

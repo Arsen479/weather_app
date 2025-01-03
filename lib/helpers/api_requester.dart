@@ -6,7 +6,7 @@ class ApiRequester {
 
   getResponse(String city) async {
     //Uri url = Uri(scheme: api, queryParameters: {'q': city, 'appid': apiKey});
-    Uri url = Uri.parse('$api?q=$city&appid=$apiKey');
+    Uri url = Uri.parse('$api?q=$city&appid=$apiKey&units=metric');
     return await http.get(url);
   }
 }

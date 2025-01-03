@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 }else if (state is WeatherErrorState) {
                   return Text(state.error);
                 }
-                return SizedBox();
+                return const SizedBox();
               },
             ),
           ],

@@ -16,8 +16,7 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
         emit(WeatherLoadingState());
 
         final response = await ApiRequester().getResponse('Bishkek');
-        //final data = jsonDecode(response.body);
-        final Map<String, dynamic> data = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
 
         log('$data');
 

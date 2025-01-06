@@ -42,29 +42,46 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.pink[50],
-      body: Center(
+      body: SafeArea(
         child: Column(
           children: [
-            ElevatedButton(
-              onPressed: () {
-                weatherBloc.add(GetCurrentWeather());
-              },
-              child: Text('Get weather'),
-            ),
             BlocBuilder<WeatherBloc, WeatherState>(
               bloc: weatherBloc,
               builder: (context, state) {
                 if (state is WeatherLoadedState) {
-                  return Container(
-                    width: 200,
-                    color: Colors.white54,
-                    child: Column(
-                      children: [
-                        Text('Country: ${state.weather.sys.country}'),
-                        Text('Name: ${state.weather.name}'),
-                        Text(
-                            'Temperature: ${state.weather.main.temp.toString()}°C'),
-                      ],
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.95,
+                    width: MediaQuery.of(context).size.width * 1,
+                    child: Container(
+                      //width: 200,
+                      decoration: const BoxDecoration(
+                        color: Colors.white54,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color.fromARGB(255, 255, 158, 180),
+                            Color.fromARGB(255, 255, 127, 157),
+                          ],
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text('Country: ${state.weather.sys.country}'),
+                          Text('Name: ${state.weather.name}'),
+                          Text(
+                              'Temperature: ${state.weather.main.temp.toString()}°C'),
+                          Text(
+                              'Clouds: ${state.weather.weather[0].description}'),
+                          Text('Humidity: ${state.weather.main.humidity}%'),
+                          ElevatedButton(
+                            onPressed: () {
+                              weatherBloc.add(GetCurrentWeather());
+                            },
+                            child: Text('Get weather'),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 } else if (state is WeatherLoadingState) {

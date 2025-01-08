@@ -11,3 +11,9 @@ final class GetCachedCurrentWeather extends WeatherEvent {
 
   GetCachedCurrentWeather(this.weatherData);
 }
+
+final class GetWeatherByCity extends WeatherEvent {
+  final String city;
+
+  GetWeatherByCity(this.city);
+}

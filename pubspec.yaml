@@ -66,6 +66,9 @@ flutter:
     - assets/iconcloud.png
     - assets/iconrainy.png
     - assets/iconsuny.png
+    - assets/iconhumidity.png
+    - assets/iconwind.png
+    - assets/free-icon-snow-4724105.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

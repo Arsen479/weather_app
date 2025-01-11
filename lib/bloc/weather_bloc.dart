@@ -20,7 +20,7 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
         final response = await ApiRequester().getResponse('Bishkek');
         final data = jsonDecode(response.body);
 
-        log('$data');
+        log('Currend:$data');
 
         final prefs = await SharedPreferences.getInstance();
         prefs.setString('weather', jsonEncode(data));
@@ -40,7 +40,7 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
         final String? haveDataWeather = prefs.getString('weather');
         if (haveDataWeather != null) {
           final data = jsonDecode(haveDataWeather);
-          log('$data');
+          log('cached city: $data');
 
           emit(WeatherLoadedState(Weather.fromJson(data)));
         }
@@ -64,7 +64,7 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
         final prefs = await SharedPreferences.getInstance();
         prefs.setString('weather', jsonEncode(data));
 
-        log('$data');
+        log('City found: $data');
 
         emit(WeatherLoadedState(Weather.fromJson(data)));
       } catch (error) {

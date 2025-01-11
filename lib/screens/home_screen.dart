@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_weather_app/bloc/weather_bloc.dart';
+import 'package:flutter_weather_app/widgets/home_screen_container.dart';
 import 'package:flutter_weather_app/widgets/weather_more_info_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,9 +37,9 @@ class _MyHomePageState extends State<MyHomePage> {
     final prefs = await SharedPreferences.getInstance();
     String? weather = prefs.getString('weather');
     if (weather != null) {
-    weatherBloc.add(GetCachedCurrentWeather(weather));
+      weatherBloc.add(GetCachedCurrentWeather(weather));
     } else {
-    weatherBloc.add(GetCurrentWeather());
+      weatherBloc.add(GetCurrentWeather());
     }
   }
 
@@ -67,14 +68,29 @@ class _MyHomePageState extends State<MyHomePage> {
         leading: IconButton(
           onPressed: () {
             showModalBottomSheet(
+              backgroundColor: Color.fromARGB(255, 255, 202, 215),
+              showDragHandle: true,
+              useSafeArea: true,
+              constraints: const BoxConstraints(
+                maxHeight: 800,
+                minHeight: 500,
+              ),
+              isScrollControlled: true,
               context: context,
               builder: (context) {
                 return TextField(
                   controller: cityController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter city name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
                   onSubmitted: (value) {
                     weatherBloc.add(
                       GetWeatherByCity(cityController.text),
                     );
+                    cityController.clear();
                   },
                 );
               },
@@ -85,124 +101,93 @@ class _MyHomePageState extends State<MyHomePage> {
           color: Color(0xff313341),
         ),
         actions: [
-          Image.asset('assets/Vector.png', height: 30, width: 30),
+          Padding(
+            padding: const EdgeInsets.only(right: 11),
+            child: Image.asset('assets/Vector.png', height: 30, width: 30),
+          ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          weatherBloc.add(GetCurrentWeather());
-        },
-        child: SafeArea(
-          child: BlocBuilder<WeatherBloc, WeatherState>(
-            bloc: weatherBloc,
-            builder: (context, state) {
-              if (state is WeatherLoadedState) {
-                final weatherMain = state.weather.weather[0].main;
-                final weatherImage = getWeatherImage(weatherMain);
-        
-                return SingleChildScrollView(
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.95,
-                    width: MediaQuery.of(context).size.width * 1,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white54,
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color.fromARGB(255, 255, 158, 180),
-                            Color.fromARGB(255, 255, 127, 157),
-                          ],
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 20, horizontal: 20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${state.weather.sys.country},\n${state.weather.name}',
-                                  style: const TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xff313341),
-                                  ),
-                                ),
-                                Text(
-                                  '${time.day}/${time.month}/${time.year}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xff9A938C),
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    Image.asset(weatherImage,
-                                        height: 100, width: 100),
-                                    SizedBox(width: 20),
-                                    Column(
-                                      children: [
-                                        Text(
-                                          '${state.weather.main.temp.toString()}°C',
-                                          style: const TextStyle(
-                                            fontSize: 50,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xff303345),
-                                          ),
-                                        ),
-                                        Text(
-                                          '$weatherMain',
-                                          style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.w500,
-                                            color: Color(0xff303345),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-        
-                          // ElevatedButton(
-                          //   onPressed: () {
-                          //     weatherBloc.add(GetCurrentWeather());
-                          //   },
-                          //   child: Text('Get weather'),
-                          // ),
-                          WeatherInfo(
-                              iconPath: 'assets/iconwind2.png',
-                              title: 'Wind',
-                              value: '${state.weather.wind.speed} m/sec'),
-                          WeatherInfo(
-                              iconPath: 'assets/iconhumidity2.png',
-                              title: 'Humidity',
-                              value: '${state.weather.main.humidity}%'),
-                          WeatherInfo(
-                              iconPath: '$weatherImage',
-                              title: '${state.weather.weather[0].main}',
-                              value: '${state.weather.clouds.all}%'),
-                        ],
-                      ),
+      body: SafeArea(
+        child: BlocBuilder<WeatherBloc, WeatherState>(
+          bloc: weatherBloc,
+          builder: (context, state) {
+            if (state is WeatherLoadedState) {
+              final weatherMain = state.weather.weather![0].main;
+              final weatherImage = getWeatherImage(weatherMain!);
+
+              return HomeScreenContainer(
+                weatherBloc: weatherBloc,
+                time: time,
+                weatherImage: weatherImage,
+                weatherMain: weatherMain,
+                state: state,
+              );
+            } else if (state is WeatherLoadingState) {
+              return Center(
+                child: Container(
+                  height: MediaQuery.of(context).size.height,
+                  width: MediaQuery.of(context).size.width,
+                  decoration: const BoxDecoration(
+                    color: Colors.white54,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color.fromARGB(255, 255, 158, 180),
+                        Color.fromARGB(255, 255, 127, 157),
+                      ],
                     ),
                   ),
-                );
-              } else if (state is WeatherLoadingState) {
-                return CircularProgressIndicator();
-              } else if (state is WeatherErrorState) {
-                return Text(state.error);
-              }
-              return const SizedBox();
-            },
-          ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Loading...',
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xff313341),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      CircularProgressIndicator(
+                        backgroundColor: Colors.pink,
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            } else if (state is WeatherErrorState) {
+              return Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+                decoration: const BoxDecoration(
+                  color: Colors.white54,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.fromARGB(255, 255, 158, 180),
+                      Color.fromARGB(255, 255, 127, 157),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: Text(
+                    'City not found try again',
+                    style: TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff313341),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox();
+          },
         ),
       ),
     );

@@ -17,6 +17,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late WeatherBloc weatherBloc;
   late TextEditingController cityController;
+  bool showSearchField = false;
 
   @override
   void initState() {
@@ -65,40 +66,52 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: Colors.pink[50],
       appBar: AppBar(
         backgroundColor: Colors.pink[100],
-        leading: IconButton(
-          onPressed: () {
-            showModalBottomSheet(
-              backgroundColor: Color.fromARGB(255, 255, 202, 215),
-              showDragHandle: true,
-              useSafeArea: true,
-              constraints: const BoxConstraints(
-                maxHeight: 800,
-                minHeight: 500,
-              ),
-              isScrollControlled: true,
-              context: context,
-              builder: (context) {
-                return TextField(
+        title: Stack(
+          children: [
+            AnimatedOpacity(
+              opacity: showSearchField ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 500),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                width: showSearchField
+                    ? MediaQuery.of(context).size.width * 0.8
+                    : 0,
+                child: TextField(
                   controller: cityController,
                   decoration: InputDecoration(
                     hintText: 'Enter city name',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 50),
                   ),
                   onSubmitted: (value) {
-                    weatherBloc.add(
-                      GetWeatherByCity(cityController.text),
-                    );
+                    weatherBloc.add(GetWeatherByCity(cityController.text));
                     cityController.clear();
+                    setState(() {
+                      showSearchField = false;
+                    });
                   },
-                );
-              },
-            );
-          },
-          icon: Image.asset('assets/iconsearch.png', height: 30, width: 30),
-          iconSize: 40,
-          color: Color(0xff313341),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    showSearchField = !showSearchField;
+                  });
+                },
+                icon: Image.asset(
+                  'assets/iconsearch.png',
+                  height: 30,
+                  width: 30,
+                ),
+                color: const Color(0xff313341),
+              ),
+            ),
+          ],
         ),
         actions: [
           Padding(

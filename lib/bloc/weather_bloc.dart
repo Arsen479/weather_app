@@ -17,13 +17,16 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
       try {
         emit(WeatherLoadingState());
 
-        final response = await ApiRequester().getResponse('Bishkek');
+        final prefs = await SharedPreferences.getInstance();
+        final cachedCity = prefs.getString('selected_city') ?? 'Bishkek';
+
+        final response = await ApiRequester().getResponse(cachedCity);
         final data = jsonDecode(response.body);
 
-        log('Currend:$data');
+        log('Current weather: $data');
 
-        final prefs = await SharedPreferences.getInstance();
         prefs.setString('weather', jsonEncode(data));
+        prefs.setString('selected_city', cachedCity);
 
         emit(WeatherLoadedState(Weather.fromJson(data)));
       } catch (error) {
@@ -35,21 +38,27 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
       try {
         emit(WeatherLoadingState());
 
-        //final String CachedweatherData = event.weatherData!;
-        final prefs = await SharedPreferences.getInstance();
-        final String? haveDataWeather = prefs.getString('weather');
-        if (haveDataWeather != null) {
-          final data = jsonDecode(haveDataWeather);
-          log('cached city: $data');
+        if (event.weatherData != null) {
+          final data = jsonDecode(event.weatherData!);
+          log('Cached weather data: $data');
 
           emit(WeatherLoadedState(Weather.fromJson(data)));
         }
 
-        final response = await ApiRequester().getResponse('Bishkek');
+        final prefs = await SharedPreferences.getInstance();
+        final cachedCity = prefs.getString('selected_city') ?? 'Bishkek';
+
+        final response = await ApiRequester().getResponse(cachedCity);
         final data = jsonDecode(response.body);
+
+        prefs.setString('weather', jsonEncode(data));
+        prefs.setString('selected_city', cachedCity);
+
+        log('Refreshed data: $data');
 
         emit(WeatherLoadedState(Weather.fromJson(data)));
       } catch (error) {
+        log(error.toString());
         emit(WeatherErrorState(error.toString()));
       }
     });
@@ -63,8 +72,9 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
 
         final prefs = await SharedPreferences.getInstance();
         prefs.setString('weather', jsonEncode(data));
+        prefs.setString('selected_city', event.city);
 
-        log('City found: $data');
+        log('City weather for:${event.city}: $data');
 
         emit(WeatherLoadedState(Weather.fromJson(data)));
       } catch (error) {

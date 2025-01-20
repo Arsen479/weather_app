@@ -16,20 +16,24 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late WeatherBloc weatherBloc;
+  late WeatherBloc weatherHourlyBloc;
   late TextEditingController cityController;
   bool showSearchField = false;
 
   @override
   void initState() {
     weatherBloc = WeatherBloc();
+    weatherHourlyBloc = WeatherBloc();
     cityController = TextEditingController();
     getCachedCurrentWeather();
+    weatherHourlyBloc.add(GetHourlyWeather());
     super.initState();
   }
 
   @override
   void dispose() {
     weatherBloc.close();
+    weatherHourlyBloc.close();
     cityController.dispose();
     super.dispose();
   }
@@ -121,23 +125,62 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: SafeArea(
-        child: BlocBuilder<WeatherBloc, WeatherState>(
-          bloc: weatherBloc,
-          builder: (context, state) {
-            if (state is WeatherLoadedState) {
-              final weatherMain = state.weather.weather![0].main;
-              final weatherImage = getWeatherImage(weatherMain!);
+        child: Expanded(
+          flex: 3,
+          child: BlocBuilder<WeatherBloc, WeatherState>(
+            bloc: weatherBloc,
+            builder: (context, state) {
+              if (state is WeatherLoadedState) {
+                final weatherMain = state.weather.weather![0].main;
+                final weatherImage = getWeatherImage(weatherMain!);
 
-              return HomeScreenContainer(
-                weatherBloc: weatherBloc,
-                time: time,
-                weatherImage: weatherImage,
-                weatherMain: weatherMain,
-                state: state,
-              );
-            } else if (state is WeatherLoadingState) {
-              return Center(
-                child: Container(
+                return HomeScreenContainer(
+                  weatherBloc: weatherBloc,
+                  time: time,
+                  weatherImage: weatherImage,
+                  weatherMain: weatherMain,
+                  state: state,
+                  weatherHourlyBloc: weatherHourlyBloc,
+                );
+              } else if (state is WeatherLoadingState) {
+                return Center(
+                  child: Container(
+                    height: MediaQuery.of(context).size.height,
+                    width: MediaQuery.of(context).size.width,
+                    decoration: const BoxDecoration(
+                      color: Colors.white54,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color.fromARGB(255, 255, 158, 180),
+                          Color.fromARGB(255, 255, 127, 157),
+                        ],
+                      ),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Loading...',
+                          style: TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff313341),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        CircularProgressIndicator(
+                          backgroundColor: Colors.pink,
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              } else if (state is WeatherErrorState) {
+                return Container(
                   height: MediaQuery.of(context).size.height,
                   width: MediaQuery.of(context).size.width,
                   decoration: const BoxDecoration(
@@ -151,56 +194,21 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
                   ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Loading...',
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xff313341),
-                        ),
+                  child: const Center(
+                    child: Text(
+                      'City not found try again',
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xff313341),
                       ),
-                      SizedBox(height: 20),
-                      CircularProgressIndicator(
-                        backgroundColor: Colors.pink,
-                        color: Colors.white,
-                        strokeWidth: 3,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            } else if (state is WeatherErrorState) {
-              return Container(
-                height: MediaQuery.of(context).size.height,
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                  color: Colors.white54,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color.fromARGB(255, 255, 158, 180),
-                      Color.fromARGB(255, 255, 127, 157),
-                    ],
-                  ),
-                ),
-                child: const Center(
-                  child: Text(
-                    'City not found try again',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xff313341),
                     ),
                   ),
-                ),
-              );
-            }
-            return const SizedBox();
-          },
+                );
+              }
+              return const SizedBox();
+            },
+          ),
         ),
       ),
     );

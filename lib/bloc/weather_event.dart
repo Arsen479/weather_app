@@ -17,3 +17,5 @@ final class GetWeatherByCity extends WeatherEvent {
 
   GetWeatherByCity(this.city);
 }
+
+final class GetHourlyWeather extends WeatherEvent{}

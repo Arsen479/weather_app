@@ -8,9 +8,17 @@ final class WeatherInitial extends WeatherState {}
 final class WeatherLoadingState extends WeatherState {}
 
 final class WeatherLoadedState extends WeatherState {
-  final Weather weather;
+  final current.Weather weather;
+  final hourly.WeatherThreeHours? hoursWeather;
 
-  WeatherLoadedState(this.weather);
+  WeatherLoadedState({required this.weather, this.hoursWeather});
+}
+
+
+final class WeatherThreeHoursForecastLoadedState extends WeatherState {
+  final hourly.WeatherThreeHours weather;
+
+  WeatherThreeHoursForecastLoadedState(this.weather);
 }
 
 final class WeatherErrorState extends WeatherState {

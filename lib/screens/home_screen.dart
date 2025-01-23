@@ -19,6 +19,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late WeatherBloc weatherHourlyBloc;
   late TextEditingController cityController;
   bool showSearchField = false;
+  List<String> cityHistory = [];
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _MyHomePageState extends State<MyHomePage> {
     cityController = TextEditingController();
     getCachedCurrentWeather();
     weatherHourlyBloc.add(GetHourlyWeather());
+    loadCityHistory();
     super.initState();
   }
 
@@ -62,6 +64,73 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future<void> loadCityHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      cityHistory = prefs.getStringList('cityHistory') ?? [];
+    });
+  }
+
+  Future<void> saveCityHistory(String city) async {
+    if (!cityHistory.contains(city)) {
+      cityHistory.add(city);
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setStringList('cityHistory', cityHistory);
+    }
+  }
+
+  Future<void> removeCityFromHistory(String city) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> cityHistory = prefs.getStringList('cityHistory') ?? [];
+
+    cityHistory.remove(city);
+    await prefs.setStringList('cityHistory', cityHistory);
+    setState(() {
+      this.cityHistory = cityHistory;
+    });
+  }
+
+  void showCityHistoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('City History'),
+          content: SizedBox(
+            width: 500,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: cityHistory.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(cityHistory[index]),
+                  trailing: IconButton(
+                    onPressed: () async {
+                      await removeCityFromHistory(cityHistory[index]);
+                      Navigator.pop(context);
+                      showCityHistoryDialog();
+                    },
+                    icon: const Icon(Icons.delete_forever),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    weatherBloc.add(GetWeatherByCity(cityHistory[index]));
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime time = DateTime.now();
@@ -90,6 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 50),
                   ),
                   onSubmitted: (value) {
+                    saveCityHistory(value);
                     weatherBloc.add(GetWeatherByCity(cityController.text));
                     cityController.clear();
                     setState(() {
@@ -120,13 +190,20 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 11),
-            child: Image.asset('assets/Vector.png', height: 30, width: 30),
+            child: IconButton(
+              icon: Image.asset('assets/Vector.png', height: 30, width: 30),
+              onPressed: () {
+                showCityHistoryDialog();
+              },
+            ),
           ),
         ],
       ),
       body: SafeArea(
-        child: Expanded(
-          flex: 3,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            weatherBloc.add(GetCurrentWeather());
+          },
           child: BlocBuilder<WeatherBloc, WeatherState>(
             bloc: weatherBloc,
             builder: (context, state) {
@@ -135,12 +212,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 final weatherImage = getWeatherImage(weatherMain!);
 
                 return HomeScreenContainer(
-                  weatherBloc: weatherBloc,
+                  //weatherBloc: weatherBloc,
                   time: time,
                   weatherImage: weatherImage,
                   weatherMain: weatherMain,
                   state: state,
-                  weatherHourlyBloc: weatherHourlyBloc,
+                  //weatherHourlyBloc: weatherHourlyBloc,
                 );
               } else if (state is WeatherLoadingState) {
                 return Center(

@@ -24,7 +24,7 @@ class WeatherThreeHours {
     });
 
     factory WeatherThreeHours.fromJson(Map<String, dynamic> json) => WeatherThreeHours(
-        cod: json["cod"],
+        cod: json["cod"].toString(),
         message: json["message"],
         cnt: json["cnt"],
         list: json["list"] == null ? [] : List<ListElement>.from(json["list"]!.map((x) => ListElement.fromJson(x))),

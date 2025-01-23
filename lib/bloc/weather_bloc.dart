@@ -6,6 +6,7 @@ import 'package:flutter_weather_app/helpers/api_requester.dart';
 import 'package:flutter_weather_app/models/cuerrent_weather_model.dart'
     as current;
 import 'package:flutter_weather_app/models/hours_weather_model.dart' as hourly;
+import 'package:flutter_weather_app/repository/repository.dart';
 import 'package:http/http.dart';
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +16,8 @@ part 'weather_state.dart';
 
 class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
   WeatherBloc() : super(WeatherInitial()) {
+    Repository repository = Repository();
+
     on<GetCurrentWeather>((event, emit) async {
       try {
         emit(WeatherLoadingState());
@@ -22,20 +25,20 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
         final prefs = await SharedPreferences.getInstance();
         final cachedCity = prefs.getString('selected_city') ?? 'Bishkek';
 
-        final response = await ApiRequester().getResponse(cachedCity);
-        final response2 = await ApiRequester().getHourlyResponse(cachedCity);
-        final data = jsonDecode(response.body);
-        final hourlyData = jsonDecode(response2.body);
+        current.Weather weatherModel = await repository.getWeather(cachedCity);
 
-        log('Current weather: $data');
-        log('Current hourly weather: $hourlyData');
+        hourly.WeatherThreeHours hourlyModel =
+            await repository.getHourlyWeather(cachedCity);
 
-        prefs.setString('weather', jsonEncode(data));
+        log('Current weather: $weatherModel');
+        log('Current hourly weather: $hourlyModel');
+
+        prefs.setString('weather', jsonEncode(weatherModel));
         prefs.setString('selected_city', cachedCity);
 
-        emit(WeatherLoadedState(
-            weather: current.Weather.fromJson(data),
-            hoursWeather: hourly.WeatherThreeHours.fromJson(hourlyData)));
+        emit(
+          WeatherLoadedState(weather: weatherModel, hoursWeather: hourlyModel),
+        );
       } catch (error) {
         emit(WeatherErrorState(error.toString()));
       }
@@ -55,15 +58,18 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
         final prefs = await SharedPreferences.getInstance();
         final cachedCity = prefs.getString('selected_city') ?? 'Bishkek';
 
-        final response = await ApiRequester().getResponse(cachedCity);
-        final data = jsonDecode(response.body);
+        current.Weather weatherModel = await repository.getWeather(cachedCity);
+        hourly.WeatherThreeHours hourlyModel =
+            await repository.getHourlyWeather(cachedCity);
 
-        prefs.setString('weather', jsonEncode(data));
+        prefs.setString('weather', jsonEncode(weatherModel));
         prefs.setString('selected_city', cachedCity);
 
-        log('Refreshed data: $data');
+        log('Refreshed data: $weatherModel');
 
-        emit(WeatherLoadedState(weather: current.Weather.fromJson(data)));
+        emit(
+          WeatherLoadedState(weather: weatherModel, hoursWeather: hourlyModel),
+        );
       } catch (error) {
         log(error.toString());
         emit(WeatherErrorState(error.toString()));
@@ -74,16 +80,20 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
       try {
         emit(WeatherLoadingState());
 
-        final response = await ApiRequester().getResponse(event.city);
-        final data = jsonDecode(response.body);
+        current.Weather weatherModel = await repository.getWeather(event.city);
+        hourly.WeatherThreeHours hourlyModel =
+            await repository.getHourlyWeather(event.city);
 
         final prefs = await SharedPreferences.getInstance();
-        prefs.setString('weather', jsonEncode(data));
+        prefs.setString('weather', jsonEncode(weatherModel));
         prefs.setString('selected_city', event.city);
 
-        log('City weather for:${event.city}: $data');
+        log('City weather for:${event.city}: $weatherModel');
+        log('City weather for:${event.city}: $hourlyModel');
 
-        emit(WeatherLoadedState(weather: current.Weather.fromJson(data)));
+        emit(
+          WeatherLoadedState(weather: weatherModel, hoursWeather: hourlyModel),
+        );
       } catch (error) {
         emit(WeatherErrorState(error.toString()));
       }
@@ -96,15 +106,15 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
         final prefs = await SharedPreferences.getInstance();
         final cachedCity = prefs.getString('selected_city') ?? 'Bishkek';
 
-        final response = await ApiRequester().getHourlyResponse(cachedCity);
-        final response2 = await ApiRequester().getResponse(cachedCity);
-        final hourlyWeather = jsonDecode(response.body);
-        final currentWeather = jsonDecode(response2.body);
+        current.Weather weatherModel = await repository.getWeather(cachedCity);
+        hourly.WeatherThreeHours hourlyModel =
+            await repository.getHourlyWeather(cachedCity);
 
-        log('Hourly weather: $hourlyWeather');
+        log('Hourly weather: $hourlyModel');
 
-        emit(WeatherLoadedState( weather: current.Weather.fromJson(currentWeather),
-            hoursWeather: hourly.WeatherThreeHours.fromJson(hourlyWeather)));
+        emit(
+          WeatherLoadedState(weather: weatherModel, hoursWeather: hourlyModel),
+        );
       } catch (error) {
         emit(WeatherErrorState(error.toString()));
       }

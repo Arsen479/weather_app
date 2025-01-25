@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
-import 'package:flutter_weather_app/helpers/api_requester.dart';
+//import 'package:flutter_weather_app/helpers/api_requester.dart';
 import 'package:flutter_weather_app/models/cuerrent_weather_model.dart'
     as current;
 import 'package:flutter_weather_app/models/hours_weather_model.dart' as hourly;
 import 'package:flutter_weather_app/repository/repository.dart';
-import 'package:http/http.dart';
+//import 'package:http/http.dart';
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

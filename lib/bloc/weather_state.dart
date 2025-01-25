@@ -14,13 +14,6 @@ final class WeatherLoadedState extends WeatherState {
   WeatherLoadedState({required this.weather, this.hoursWeather});
 }
 
-
-final class WeatherThreeHoursForecastLoadedState extends WeatherState {
-  final hourly.WeatherThreeHours weather;
-
-  WeatherThreeHoursForecastLoadedState(this.weather);
-}
-
 final class WeatherErrorState extends WeatherState {
   final String error;
 

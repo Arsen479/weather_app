@@ -1,30 +1,45 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+//import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_weather_app/bloc/weather_bloc.dart';
+import 'package:flutter_weather_app/screens/next_days_weather.dart';
 import 'package:flutter_weather_app/widgets/weather_more_info_card.dart';
 
 class HomeScreenContainer extends StatelessWidget {
   const HomeScreenContainer({
     super.key,
-    //required this.weatherBloc,
     required this.time,
     required this.weatherImage,
     required this.weatherMain,
     required this.state,
-    //required this.weatherHourlyBloc,
   });
 
-  //final WeatherBloc weatherBloc;
-  //final WeatherBloc weatherHourlyBloc;
   final DateTime time;
   final String weatherImage;
   final String weatherMain;
   final WeatherLoadedState state;
 
+  String showNow(int index) {
+    final DateTime now = DateTime.now();
+    final DateTime forecastTime = state.hoursWeather!.list![index].dtTxt!;
+
+    if (now.day == forecastTime.day &&
+        now.hour <= forecastTime.hour &&
+        forecastTime.hour - now.hour <= 3) {
+      return 'Now';
+    }
+    return forecastTime.hour.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final DateTime now = DateTime.now();
+    final currentDayForecasts = state.hoursWeather?.list!
+        .where((forecast) =>forecast.dtTxt != null && forecast.dtTxt!.day == now.day)
+        .toList();
+    
+
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: 1,
@@ -109,34 +124,56 @@ class HomeScreenContainer extends StatelessWidget {
                   iconPath: '$weatherImage',
                   title: '${state.weather.weather![0].main}',
                   value: '${state.weather.clouds!.all}%'),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-                child: Text(
-                  'Today',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xff303345),
-                  ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Today',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xff303345),
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NextDaysWeather(
+                                state: state,
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('Next 3 days')),
+                  ],
                 ),
               ),
 
-              // Прогноз на несколько часов
-              if (state.hoursWeather != null)
+              // Прогноз на несколько часов(карточки)
+              if (state.hoursWeather != null && currentDayForecasts!.isNotEmpty)
                 SizedBox(
-                  height: 140,
+                  height: 142,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: state.hoursWeather!.list!.length,
+                    itemCount: currentDayForecasts
+                        .length, //state.hoursWeather!.list!.length,
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.all(10.0),
                         child: Container(
-                          height: 100,
+                          //height: 120,
                           width: 70,
                           decoration: BoxDecoration(
                             color: const Color.fromARGB(255, 255, 163, 163),
                             borderRadius: BorderRadius.circular(40),
+                            border: showNow(index) == 'Now'
+                                ? Border.all(color: Colors.pink, width: 2)
+                                : null,
                           ),
                           child: Center(
                             child: Padding(
@@ -152,25 +189,30 @@ class HomeScreenContainer extends StatelessWidget {
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 11),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 11,
+                                    ),
                                     child: Row(
                                       children: [
                                         Text(
-                                          '${state.hoursWeather!.list![index].dtTxt!.hour}:',
-                                          style: const TextStyle(
+                                          showNow(index),
+                                          style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xff303345),
+                                            color: showNow(index) == 'Now'
+                                                ? Colors.red
+                                                : Color(0xff303345),
                                           ),
                                         ),
-                                        Text(
-                                          '${state.hoursWeather!.list![index].dtTxt!.minute}0',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xff303345),
+                                        if (showNow(index) != 'Now')
+                                          Text(
+                                            ':${state.hoursWeather!.list![index].dtTxt!.minute}0',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xff303345),
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),
